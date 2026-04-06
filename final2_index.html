@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네이버 쇼핑 분석 Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+:root{
+  --green:#03C75A;--gd:#02a34a;--gl:#e8f9ef;
+  --blue:#1976D2;--red:#D84315;--orange:#F57C00;--purple:#7B1FA2;
+  --bg:#f5f6f8;--card:#fff;--bd:#e2e5ea;
+  --t:#1a1a2e;--t2:#6b7280;--t3:#9ca3af;
+  --gold:#F59E0B;--silver:#94A3B8;--bronze:#B45309;
+  --r:12px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;}
+
+/* 로그인/회원가입 화면 */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:40px;width:100%;max-width:420px;box-shadow:0 4px 24px rgba(0,0,0,0.08);}
+.auth-logo{text-align:center;margin-bottom:28px;}
+.auth-logo .ico{width:56px;height:56px;background:var(--green);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;}
+.auth-logo h1{font-size:22px;font-weight:700;}
+.auth-logo p{font-size:13px;color:var(--t2);margin-top:4px;}
+.auth-tabs{display:flex;gap:4px;background:var(--bg);border-radius:var(--rs);padding:4px;margin-bottom:24px;}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:14px;font-weight:500;border-radius:6px;cursor:pointer;color:var(--t2);border:none;background:none;font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+.auth-tab.active{background:var(--card);color:var(--t);box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+.auth-form{display:flex;flex-direction:column;gap:12px;}
+.auth-input{height:46px;border:1.5px solid var(--bd);border-radius:var(--rs);padding:0 16px;font-size:14px;font-family:'Noto Sans KR',sans-serif;color:var(--t);background:#fafafa;outline:none;width:100%;}
+.auth-input:focus{border-color:var(--green);background:#fff;}
+.auth-input::placeholder{color:var(--t3);}
+.auth-btn{height:46px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .2s;}
+.auth-btn:hover{background:var(--gd);}
+.auth-err{font-size:13px;color:#b91c1c;text-align:center;padding:8px;background:#fef2f2;border-radius:var(--rs);display:none;}
+.auth-err.on{display:block;}
+.auth-free-info{font-size:12px;color:var(--t3);text-align:center;margin-top:8px;}
+
+/* 메인 앱 */
+.app-wrap{display:none;padding:24px 16px;}
+.app-wrap.on{display:block;}
+.w{max-width:980px;margin:0 auto;}
+
+/* 헤더 */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.hdr-left{display:flex;align-items:center;gap:12px;}
+.logo{width:44px;height:44px;background:var(--green);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.hdr h1{font-size:20px;font-weight:700;}
+.hdr p{font-size:13px;color:var(--t2);margin-top:2px;}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.usage-badge{font-size:12px;padding:5px 12px;border-radius:20px;background:var(--gl);color:#0a6b2e;font-weight:500;}
+.usage-badge.limit{background:#fef2f2;color:#b91c1c;}
+.premium-badge{font-size:12px;padding:5px 12px;border-radius:20px;background:#fef3c7;color:#92400e;font-weight:700;}
+.logout-btn{font-size:13px;padding:6px 14px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+
+/* 탭 */
+.tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:4px;}
+.tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:500;border-radius:var(--rs);cursor:pointer;color:var(--t2);border:none;background:none;font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+.tab.active{background:var(--green);color:#fff;}
+.tc{display:none;}.tc.on{display:block;}
+
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.row{display:flex;gap:8px;margin-bottom:12px;}
+.iw{flex:1;display:flex;flex-direction:column;gap:4px;}
+.il{font-size:12px;color:var(--t2);font-weight:500;}
+input[type=text],input[type=number],select{height:42px;border:1.5px solid var(--bd);border-radius:var(--rs);padding:0 14px;font-size:14px;font-family:'Noto Sans KR',sans-serif;color:var(--t);background:#fafafa;outline:none;width:100%;}
+input:focus,select:focus{border-color:var(--green);background:#fff;}
+input::placeholder{color:var(--t3);}
+select{cursor:pointer;}
+.opts{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.ow{display:flex;flex-direction:column;gap:4px;}
+
+.btn{height:42px;padding:0 24px;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.bg{background:var(--green);color:#fff;}.bg:hover{background:var(--gd);}
+.bb{background:var(--blue);color:#fff;}.bb:hover{background:#1565C0;}
+.bo{background:var(--orange);color:#fff;}.bo:hover{background:#E65100;}
+.bp{background:var(--purple);color:#fff;}.bp:hover{background:#6A1B9A;}
+.btn:disabled{background:var(--bd);color:var(--t3);cursor:not-allowed;}
+
+.err{background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r);padding:14px 18px;font-size:13px;color:#b91c1c;margin-bottom:16px;display:none;}
+.err.on{display:block;}
+.prog{display:none;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.prog.on{display:block;}
+.ph{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.spin{width:18px;height:18px;border:2.5px solid var(--gl);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite;flex-shrink:0;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.pt{font-size:14px;font-weight:500;}.ps{font-size:12px;color:var(--t2);margin-top:2px;}
+.pbg{background:var(--bg);border-radius:4px;height:6px;overflow:hidden;}
+.pb{height:100%;background:var(--green);border-radius:4px;transition:width .4s;width:0%;}
+.steps{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
+.step{font-size:11px;padding:2px 7px;border-radius:20px;background:var(--bg);color:var(--t3);border:1px solid var(--bd);}
+.step.done{background:var(--gl);color:#0a6b2e;border-color:#a7f0c5;}
+.step.cur{background:var(--green);color:#fff;border-color:var(--green);}
+
+/* 순위 결과 */
+.rr{display:none;}.rr.on{display:block;}
+.rsum{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.rhd{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#fafafa;}
+.rkw{font-size:13px;color:var(--t2);}.rkw strong{color:var(--t);font-weight:700;}
+.badge{display:inline-flex;align-items:center;padding:4px 14px;border-radius:20px;font-size:14px;font-weight:700;}
+.badge.hit{background:var(--gl);color:#0a6b2e;}.badge.miss{background:#fef2f2;color:#b91c1c;}
+.rbdy{padding:18px;display:flex;align-items:center;gap:18px;}
+.bnum{font-size:52px;font-weight:700;color:var(--green);line-height:1;min-width:80px;text-align:center;}
+.bnum-s{font-size:13px;color:var(--t2);text-align:center;margin-top:4px;}
+.pnm{font-size:15px;font-weight:700;line-height:1.5;margin-bottom:8px;}
+.ptags{display:flex;flex-wrap:wrap;gap:8px;}
+.ptag{font-size:12px;padding:3px 10px;border-radius:6px;background:var(--bg);color:var(--t2);border:1px solid var(--bd);}
+.ptag.pr{color:var(--red);background:#fff5f0;border-color:#fcd9c5;font-weight:700;}
+.nores{padding:24px;text-align:center;}
+.nores-i{font-size:32px;margin-bottom:8px;}
+.nores-t{font-size:15px;font-weight:700;margin-bottom:4px;}
+.nores-d{font-size:13px;color:var(--t2);}
+
+.sec{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.sechd{padding:12px 18px;border-bottom:1px solid var(--bd);background:#fafafa;display:flex;align-items:center;justify-content:space-between;}
+.sect{font-size:14px;font-weight:700;}.secs{font-size:12px;color:var(--t2);}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;color:var(--t3);font-weight:500;padding:8px 18px;text-align:left;border-bottom:1px solid var(--bd);background:#fafafa;}
+td{padding:10px 18px;font-size:13px;border-bottom:1px solid var(--bd);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr.mr td{background:#f0fdf6;}tr:hover td{background:#f9fafb;}tr.mr:hover td{background:#e8f9ef;}
+.rn{font-weight:700;font-size:14px;}
+.rn.r1{color:var(--gold);}.rn.r2{color:var(--silver);}.rn.r3{color:var(--bronze);}.rn.me{color:var(--green);}
+.mel{display:inline-block;font-size:10px;padding:1px 6px;background:var(--green);color:#fff;border-radius:4px;margin-left:6px;font-weight:700;}
+.prc{font-size:13px;font-weight:700;color:var(--red);white-space:nowrap;}
+.rftr{text-align:center;font-size:12px;color:var(--t3);padding:8px 0 16px;}
+
+/* 키워드 분석 */
+.kr{display:none;}.kr.on{display:block;}
+.kstats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.ksc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px;text-align:center;}
+.ksl{font-size:12px;color:var(--t2);margin-bottom:6px;}
+.ksv{font-size:22px;font-weight:700;}
+.ksv.g{color:var(--green);}.ksv.b{color:var(--blue);}.ksv.o{color:var(--orange);}.ksv.p{color:var(--purple);}
+.kss{font-size:11px;color:var(--t3);margin-top:4px;}
+.gauge-wrap{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.gauge-title{font-size:14px;font-weight:700;margin-bottom:16px;}
+.gauge-bg{background:#f0f0f0;border-radius:6px;height:16px;overflow:hidden;margin-bottom:8px;}
+.gauge-bar{height:100%;border-radius:6px;transition:width .8s ease;}
+.gauge-lbls{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);}
+.ptabs{display:flex;gap:4px;margin-bottom:12px;}
+.ptab{padding:6px 16px;font-size:13px;font-weight:500;border-radius:20px;cursor:pointer;border:1.5px solid var(--bd);background:var(--card);color:var(--t2);font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+.ptab.active{background:var(--green);color:#fff;border-color:var(--green);}
+.utabs{display:flex;gap:4px;margin-bottom:14px;}
+.utab{padding:4px 12px;font-size:12px;font-weight:500;border-radius:20px;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--t2);font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+.utab.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.chartcard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.charttitle{font-size:14px;font-weight:700;margin-bottom:12px;}
+.chartwrap{position:relative;height:260px;}
+.compbar{display:flex;align-items:center;gap:8px;}
+.compbar-in{height:6px;border-radius:3px;}
+.complbl{font-size:11px;white-space:nowrap;}
+.bid-bar{display:flex;align-items:center;gap:8px;}
+.bid-bar-in{height:8px;border-radius:4px;background:var(--blue);}
+
+/* 급상승 */
+.hr{display:none;}.hr.on{display:block;}
+.cat-wrap{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.cat-btn{padding:6px 14px;font-size:13px;border-radius:20px;cursor:pointer;border:1.5px solid var(--bd);background:var(--card);color:var(--t2);font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+.cat-btn.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+
+/* 시뮬레이터 */
+.sr{display:none;}.sr.on{display:block;}
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.sim-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:18px;text-align:center;}
+.sim-icon{font-size:28px;margin-bottom:8px;}
+.sim-label{font-size:12px;color:var(--t2);margin-bottom:6px;}
+.sim-val{font-size:26px;font-weight:700;}
+.sim-val.g{color:var(--green);}.sim-val.b{color:var(--blue);}.sim-val.o{color:var(--orange);}
+.sim-sub{font-size:11px;color:var(--t3);margin-top:4px;}
+
+/* 횟수 초과 팝업 */
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.overlay.on{display:flex;}
+.popup{background:var(--card);border-radius:20px;padding:36px;max-width:440px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.2);}
+.popup-icon{font-size:48px;margin-bottom:16px;}
+.popup h2{font-size:20px;font-weight:700;margin-bottom:10px;}
+.popup p{font-size:14px;color:var(--t2);line-height:1.7;margin-bottom:20px;}
+.popup-highlight{background:#fff8e1;border:1px solid #ffd54f;border-radius:var(--rs);padding:16px;margin-bottom:20px;text-align:left;}
+.popup-highlight p{font-size:14px;color:#5d4037;margin-bottom:0;}
+.popup-highlight strong{color:#e65100;font-size:16px;}
+.popup-btn{width:100%;height:48px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;margin-bottom:10px;}
+.popup-btn:hover{background:var(--gd);}
+.popup-close{font-size:13px;color:var(--t3);cursor:pointer;text-decoration:underline;}
+
+/* 쿠팡 배너 */
+.coupang-banner{background:linear-gradient(135deg,#e8230a,#c41800);border-radius:var(--r);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:opacity .2s;}
+.coupang-banner:hover{opacity:.9;}
+.coupang-left{display:flex;align-items:center;gap:12px;}
+.coupang-icon{font-size:28px;}
+.coupang-text h3{font-size:14px;font-weight:700;color:#fff;}
+.coupang-text p{font-size:12px;color:rgba(255,255,255,.8);margin-top:2px;}
+.coupang-right{font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px;}
+
+@media(max-width:640px){
+  .row{flex-direction:column;}
+  .kstats{grid-template-columns:repeat(2,1fr);}
+  .sim-grid{grid-template-columns:repeat(2,1fr);}
+  .rbdy{flex-direction:column;text-align:center;}
+  .tabs{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+
+<!-- 로그인/회원가입 -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="ico">📊</div>
+      <h1>네이버 쇼핑 분석 Pro</h1>
+      <p>순위·트렌드·입찰가·광고 시뮬레이터</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="swAuth('login')">로그인</button>
+      <button class="auth-tab" onclick="swAuth('signup')">회원가입</button>
+    </div>
+    <div class="auth-form">
+      <input class="auth-input" type="email" id="authEmail" placeholder="이메일" />
+      <input class="auth-input" type="password" id="authPw" placeholder="비밀번호 (6자 이상)" />
+      <div class="auth-err" id="authErr"></div>
+      <button class="auth-btn" id="authBtn" onclick="doAuth()">로그인</button>
+      <p class="auth-free-info">🎁 무료 3회 제공 · 이후 월 5,000원</p>
+    </div>
+  </div>
+</div>
+
+<!-- 메인 앱 -->
+<div class="app-wrap" id="appWrap">
+<div class="w">
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="logo">📊</div>
+    <div>
+      <h1>네이버 쇼핑 분석 Pro</h1>
+      <p>순위 확인 · 키워드 분석 · 입찰가 · 광고 시뮬레이터</p>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <span id="usageBadge" class="usage-badge">무료 0/3회</span>
+    <span id="premiumBadge" class="premium-badge" style="display:none">⭐ 프리미엄</span>
+    <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+  </div>
+</div>
+
+<!-- 쿠팡 배너 (3회 이상 사용시 노출) -->
+<div class="coupang-banner" id="coupangBanner" style="display:none" onclick="openCoupang()">
+  <div class="coupang-left">
+    <div class="coupang-icon">🛒</div>
+    <div class="coupang-text">
+      <h3>쿠팡에서 경쟁 상품 최저가 확인하기</h3>
+      <p>지금 바로 쿠팡에서 상품 비교해보세요!</p>
+    </div>
+  </div>
+  <div class="coupang-right">바로가기 →</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('rank')">🏆 순위 확인</button>
+  <button class="tab" onclick="sw('kw')">🔍 키워드 분석</button>
+  <button class="tab" onclick="sw('hot')">🔥 급상승 키워드</button>
+  <button class="tab" onclick="sw('sim')">💰 광고 시뮬레이터</button>
+</div>
+
+<!-- 순위 확인 -->
+<div class="tc on" id="tc-rank">
+  <div class="card">
+    <div class="row">
+      <div class="iw"><span class="il">검색 키워드</span><input type="text" id="kw" placeholder="예: 블루투스 이어폰" /></div>
+      <div class="iw"><span class="il">내 상품명 (일부 입력)</span><input type="text" id="pn" placeholder="예: SoundPEATS T3 Pro" /></div>
+    </div>
+    <div class="opts">
+      <div class="ow"><span class="il">조회 범위</span>
+        <select id="mxr"><option value="100">100위</option><option value="300">300위</option><option value="500">500위</option><option value="1000" selected>1000위</option></select>
+      </div>
+      <div class="ow"><span class="il">정렬</span>
+        <select id="srt"><option value="sim" selected>관련도순</option><option value="date">최신순</option><option value="asc">낮은가격순</option><option value="dsc">높은가격순</option></select>
+      </div>
+      <div class="ow"><span class="il">상품 유형</span>
+        <select id="flt"><option value="">전체</option><option value="national">국내</option><option value="foreign">해외</option></select>
+      </div>
+      <button class="btn bg" id="btnR" onclick="doCheck(startRank)">순위 확인</button>
+    </div>
+  </div>
+  <div class="err" id="rErr"></div>
+  <div class="prog" id="rProg">
+    <div class="ph"><div class="spin"></div><div><div class="pt" id="pTxt">검색 중...</div><div class="ps" id="pSub"></div></div></div>
+    <div class="pbg"><div class="pb" id="pBar"></div></div>
+    <div class="steps" id="pSteps"></div>
+  </div>
+  <div class="rr" id="rRes">
+    <div class="rsum" id="rSum"></div>
+    <div class="sec" id="topSec"></div>
+    <div class="rftr" id="rFtr"></div>
+  </div>
+</div>
+
+<!-- 키워드 분석 -->
+<div class="tc" id="tc-kw">
+  <div class="card">
+    <div class="row">
+      <div class="iw"><span class="il">분석할 키워드</span><input type="text" id="akw" placeholder="예: 블루투스 이어폰" /></div>
+    </div>
+    <div class="opts">
+      <button class="btn bb" id="btnK" onclick="doCheck(startKw)">키워드 분석</button>
+    </div>
+  </div>
+  <div class="err" id="kErr"></div>
+  <div class="prog" id="kProg">
+    <div class="ph"><div class="spin"></div><div><div class="pt">키워드 분석 중...</div><div class="ps">검색량 · 입찰가 · 트렌드 조회 중</div></div></div>
+  </div>
+  <div class="kr" id="kRes">
+    <div class="kstats" id="kStats"></div>
+    <div class="gauge-wrap" id="gaugeWrap">
+      <div class="gauge-title">광고 경쟁 강도</div>
+      <div class="gauge-bg"><div class="gauge-bar" id="gaugeBar"></div></div>
+      <div class="gauge-lbls"><span>낮음</span><span>중간</span><span>높음</span></div>
+      <div id="compBadge" style="margin-top:10px;"></div>
+    </div>
+    <div class="chartcard">
+      <div class="charttitle" id="cTitle">검색 트렌드</div>
+      <div class="ptabs">
+        <button class="ptab" onclick="chP('1month','date',this)">1개월</button>
+        <button class="ptab" onclick="chP('3month','week',this)">3개월</button>
+        <button class="ptab active" onclick="chP('1year','month',this)">1년</button>
+        <button class="ptab" onclick="chP('3year','month',this)">3년</button>
+      </div>
+      <div class="utabs">
+        <button class="utab" onclick="chU('date',this)">일별</button>
+        <button class="utab" onclick="chU('week',this)">주별</button>
+        <button class="utab active" onclick="chU('month',this)">월별</button>
+      </div>
+      <div class="chartwrap"><canvas id="tChart"></canvas></div>
+    </div>
+    <div class="sec" id="bidSec"></div>
+    <div class="sec">
+      <div class="sechd"><span class="sect">연관 키워드 검색량</span><span class="secs" id="kwSub"></span></div>
+      <table><thead><tr><th>키워드</th><th>월간 PC</th><th>월간 모바일</th><th>합계</th><th>경쟁도</th></tr></thead>
+      <tbody id="kwBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- 급상승 키워드 -->
+<div class="tc" id="tc-hot">
+  <div class="card">
+    <div style="margin-bottom:12px;">
+      <span class="il" style="display:block;margin-bottom:8px;">카테고리 선택</span>
+      <div class="cat-wrap">
+        <button class="cat-btn active" onclick="selCat('50000000','전체',this)">전체</button>
+        <button class="cat-btn" onclick="selCat('50000002','패션의류',this)">패션의류</button>
+        <button class="cat-btn" onclick="selCat('50000003','패션잡화',this)">패션잡화</button>
+        <button class="cat-btn" onclick="selCat('50000004','화장품/미용',this)">화장품/미용</button>
+        <button class="cat-btn" onclick="selCat('50000005','디지털/가전',this)">디지털/가전</button>
+        <button class="cat-btn" onclick="selCat('50000006','가구/인테리어',this)">가구/인테리어</button>
+        <button class="cat-btn" onclick="selCat('50000007','출산/육아',this)">출산/육아</button>
+        <button class="cat-btn" onclick="selCat('50000008','식품',this)">식품</button>
+        <button class="cat-btn" onclick="selCat('50000009','스포츠/레저',this)">스포츠/레저</button>
+        <button class="cat-btn" onclick="selCat('50000010','생활/건강',this)">생활/건강</button>
+      </div>
+    </div>
+    <div class="opts">
+      <div class="ow"><span class="il">조회 기간</span>
+        <select id="hPeriod"><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="90">최근 3개월</option></select>
+      </div>
+      <button class="btn bo" id="btnH" onclick="doCheck(startHot)">트렌드 조회</button>
+    </div>
+  </div>
+  <div class="err" id="hErr"></div>
+  <div class="prog" id="hProg">
+    <div class="ph"><div class="spin"></div><div><div class="pt">쇼핑 트렌드 조회 중...</div><div class="ps">카테고리 데이터 분석 중</div></div></div>
+  </div>
+  <div class="hr" id="hRes">
+    <div class="chartcard">
+      <div class="charttitle" id="hTitle">카테고리 쇼핑 트렌드</div>
+      <div class="chartwrap"><canvas id="hChart"></canvas></div>
+    </div>
+    <div class="sec" id="hSec"></div>
+  </div>
+</div>
+
+<!-- 광고 시뮬레이터 -->
+<div class="tc" id="tc-sim">
+  <div class="card">
+    <div class="row">
+      <div class="iw"><span class="il">키워드</span><input type="text" id="sKw" placeholder="예: 블루투스 이어폰" /></div>
+      <div class="iw"><span class="il">일 예산 (원)</span><input type="number" id="sBudget" placeholder="예: 100000" value="100000" /></div>
+    </div>
+    <div class="opts">
+      <div class="ow"><span class="il">디바이스</span>
+        <select id="sDev"><option value="pc" selected>PC</option><option value="mobile">모바일</option></select>
+      </div>
+      <button class="btn bp" id="btnS" onclick="doCheck(startSim)">시뮬레이션</button>
+    </div>
+  </div>
+  <div class="err" id="sErr"></div>
+  <div class="prog" id="sProg">
+    <div class="ph"><div class="spin"></div><div><div class="pt">광고 데이터 분석 중...</div><div class="ps">입찰가 및 예상 성과 계산 중</div></div></div>
+  </div>
+  <div class="sr" id="sRes">
+    <div class="sim-grid" id="simGrid"></div>
+    <div class="sec" id="simSec"></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- 횟수 초과 팝업 -->
+<div class="overlay" id="limitOverlay">
+  <div class="popup">
+    <div class="popup-icon">🔒</div>
+    <h2>무료 이용 횟수를 모두 사용했습니다</h2>
+    <p>무료 3회 이용이 완료되었습니다.<br>계속 이용하시려면 프리미엄으로 업그레이드하세요!</p>
+    <div class="popup-highlight">
+      <p>💳 <strong>월 5,000원</strong>으로 무제한 이용</p>
+      <p style="margin-top:8px;font-size:13px;">네이버페이로 <strong>kidesh</strong> 님에게 5,000 포인트 선물 후<br>아래 버튼을 눌러 아이디를 남겨주세요!</p>
+    </div>
+    <button class="popup-btn" onclick="openNaverPay()">💚 네이버페이로 결제하기</button>
+    <p class="popup-close" onclick="closePopup()">나중에 하기</p>
+  </div>
+</div>
+
+<script>
+let chartInst=null, hChartInst=null;
+let curKw='', curPeriod='1year', curUnit='month';
+let curCat='50000000', curCatName='전체';
+let authMode='login';
+let sessionToken=null;
+let userData=null;
+let totalUsage=0;
+
+// ===== 인증 =====
+function swAuth(mode){
+  authMode=mode;
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(mode==='login'&&i===0)||(mode==='signup'&&i===1)));
+  document.getElementById('authBtn').textContent=mode==='login'?'로그인':'회원가입';
+}
+
+async function doAuth(){
+  const email=document.getElementById('authEmail').value.trim();
+  const pw=document.getElementById('authPw').value.trim();
+  if(!email||!pw){showAuthErr('이메일과 비밀번호를 입력해주세요.');return;}
+  document.getElementById('authBtn').disabled=true;
+  document.getElementById('authBtn').textContent='처리 중...';
+  try{
+    const res=await fetch(`/api/user?action=${authMode}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pw})
+    });
+    const data=await res.json();
+    if(data.errorMessage){showAuthErr(data.errorMessage);return;}
+    sessionToken=data.session?.access_token;
+    userData=data.user;
+    localStorage.setItem('session_token',sessionToken);
+    showApp();
+  }catch(e){showAuthErr('오류: '+e.message);}
+  finally{
+    document.getElementById('authBtn').disabled=false;
+    document.getElementById('authBtn').textContent=authMode==='login'?'로그인':'회원가입';
+  }
+}
+
+function showAuthErr(msg){const el=document.getElementById('authErr');el.textContent=msg;el.classList.add('on');}
+
+function showApp(){
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('appWrap').classList.add('on');
+  updateUsageUI();
+}
+
+function updateUsageUI(){
+  if(!userData)return;
+  const isPremium=userData.is_premium;
+  const count=userData.usage_count||0;
+  totalUsage=count;
+  const badge=document.getElementById('usageBadge');
+  const premBadge=document.getElementById('premiumBadge');
+  if(isPremium){
+    badge.style.display='none';
+    premBadge.style.display='inline';
+  } else {
+    badge.style.display='inline';
+    premBadge.style.display='none';
+    badge.textContent=`무료 ${count}/3회`;
+    badge.className=count>=3?'usage-badge limit':'usage-badge';
+  }
+  // 3회 이상이면 쿠팡 배너 표시
+  if(count>=3){
+    document.getElementById('coupangBanner').style.display='flex';
+  }
+}
+
+async function doLogout(){
+  sessionToken=null; userData=null;
+  localStorage.removeItem('session_token');
+  document.getElementById('authWrap').style.display='flex';
+  document.getElementById('appWrap').classList.remove('on');
+}
+
+// 자동 로그인
+window.addEventListener('load', async()=>{
+  const token=localStorage.getItem('session_token');
+  if(token){
+    try{
+      const res=await fetch('/api/user?action=me',{headers:{'Authorization':'Bearer '+token}});
+      const data=await res.json();
+      if(!data.errorMessage){sessionToken=token;userData=data;showApp();}
+    }catch(e){}
+  }
+});
+
+// ===== 횟수 체크 =====
+async function doCheck(fn){
+  if(!sessionToken){showPopup();return;}
+  try{
+    const res=await fetch('/api/user?action=check_usage',{headers:{'Authorization':'Bearer '+sessionToken}});
+    const data=await res.json();
+    if(!data.allowed){showPopup();return;}
+    userData.usage_count=data.usage_count;
+    userData.is_premium=data.is_premium;
+    updateUsageUI();
+    fn();
+  }catch(e){fn();}
+}
+
+function showPopup(){document.getElementById('limitOverlay').classList.add('on');}
+function closePopup(){document.getElementById('limitOverlay').classList.remove('on');}
+function openNaverPay(){window.open('https://pay.naver.com/send/gift?userId=kidesh','_blank');}
+function openCoupang(){window.open('https://link.coupang.com/a/YOUR_COUPANG_PARTNER_LINK','_blank');}
+
+// ===== 탭 =====
+function sw(t){
+  ['rank','kw','hot','sim'].forEach((id,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===id);
+    document.getElementById('tc-'+id).classList.toggle('on',t===id);
+  });
+}
+
+// ===== 순위 확인 =====
+async function startRank(){
+  const kw=v('kw'),pn=v('pn'),maxR=parseInt(v('mxr')),srt=v('srt'),flt=v('flt');
+  if(!kw){se('rErr','검색 키워드를 입력해주세요.');return;}
+  if(!pn){se('rErr','찾을 상품명을 입력해주세요.');return;}
+  he('rErr');sh('rProg');hi('rRes');dis('btnR');
+  const total=Math.ceil(maxR/100);const items=[];let found=null,fRank=null;
+  try{
+    for(let p=0;p<total;p++){
+      const start=p*100+1,display=Math.min(100,maxR-p*100);
+      st('pTxt',`${start}~${start+display-1}위 검색 중...`);
+      st('pSub',`${p+1} / ${total} 페이지`);
+      sw2('pBar',((p/total)*100)+'%');
+      document.getElementById('pSteps').innerHTML=Array.from({length:total},(_,i)=>{
+        const c=i<p?'done':i===p?'cur':'';
+        return `<span class="step ${c}">${i*100+1}~${(i+1)*100}위</span>`;
+      }).join('');
+      const params=new URLSearchParams({query:kw,start,display,sort:srt,...(flt?{filter:flt}:{})});
+      const res=await fetch(`/api/search?${params}`);
+      const data=await res.json();
+      (data.items||[]).forEach((item,idx)=>{
+        const rank=start+idx,name=item.title.replace(/<[^>]*>/g,'');
+        items.push({rank,name,price:parseInt(item.lprice||0).toLocaleString()+'원',mall:item.mallName||'-',review:item.reviewCount||0});
+        const n=s=>s.toLowerCase().replace(/\s/g,'');
+        if(!found&&n(name).includes(n(pn))){found=items[items.length-1];fRank=rank;}
+      });
+      await sl(120);
+    }
+    sw2('pBar','100%');st('pTxt','분석 완료!');await sl(300);
+    hi('rProg');renderRank(kw,pn,maxR,found,fRank,items);
+  }catch(e){hi('rProg');se('rErr','오류: '+e.message);}
+  finally{en('btnR');}
+}
+
+function renderRank(kw,pn,maxR,found,fRank,items){
+  const badge=found?`<span class="badge hit">🎯 ${fRank}위 발견</span>`:`<span class="badge miss">${maxR}위 이내 없음</span>`;
+  const body=found
+    ?`<div><div class="bnum">${fRank}</div><div class="bnum-s">/ ${maxR}위 이내</div></div>
+      <div><div class="pnm">${found.name}</div><div class="ptags">
+      <span class="ptag pr">${found.price}</span><span class="ptag">${found.mall}</span>
+      ${found.review>0?`<span class="ptag">리뷰 ${parseInt(found.review).toLocaleString()}개</span>`:''}</div></div>`
+    :`<div class="nores"><div class="nores-i">📭</div><div class="nores-t">"${pn}" 상품을 찾지 못했습니다</div><div class="nores-d">${maxR}위 이내에 없습니다</div></div>`;
+  document.getElementById('rSum').innerHTML=`
+    <div class="rhd"><span class="rkw">키워드: <strong>${kw}</strong> · 상품: <strong>${pn}</strong></span>${badge}</div>
+    <div class="rbdy">${body}</div>`;
+  let show=items.slice(0,20);
+  if(found&&fRank>20)show.push(found);
+  const rows=show.map(item=>{
+    const isMe=found&&item.rank===fRank;
+    const sep=(found&&fRank>20&&item.rank===found.rank)?`<tr><td colspan="4" style="text-align:center;font-size:11px;color:var(--t3);padding:6px;">···· ${fRank-20}개 항목 생략 ····</td></tr>`:'';
+    const rc=item.rank===1?'rn r1':item.rank===2?'rn r2':item.rank===3?'rn r3':isMe?'rn me':'rn';
+    return `${sep}<tr class="${isMe?'mr':''}"><td><span class="${rc}">${item.rank}</span></td><td>${item.name}${isMe?'<span class="mel">내 상품</span>':''}</td><td style="font-size:12px;color:var(--t2)">${item.mall}</td><td class="prc">${item.price}</td></tr>`;
+  }).join('');
+  document.getElementById('topSec').innerHTML=`
+    <div class="sechd"><span class="sect">상위 목록</span><span class="secs">총 ${items.length}개 조회</span></div>
+    <table><thead><tr><th style="width:50px">순위</th><th>상품명</th><th style="width:110px">판매처</th><th style="width:90px">최저가</th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.getElementById('rFtr').textContent=`조회: ${new Date().toLocaleString('ko-KR')}`;
+  sh('rRes');
+}
+
+// ===== 키워드 분석 =====
+async function startKw(){
+  const kw=v('akw');
+  if(!kw){se('kErr','키워드를 입력해주세요.');return;}
+  he('kErr');curKw=kw;curPeriod='1year';curUnit='month';
+  document.querySelectorAll('.ptab').forEach((t,i)=>t.classList.toggle('active',i===2));
+  document.querySelectorAll('.utab').forEach((t,i)=>t.classList.toggle('active',i===2));
+  sh('kProg');hi('kRes');dis('btnK');
+  try{
+    const [kRes,dRes]=await Promise.all([
+      fetch(`/api/keyword?keyword=${enc(kw)}`),
+      fetch(`/api/datalab?keyword=${enc(kw)}&timeUnit=month&startDate=${gd(-1,'y')}&endDate=${gd(0)}`)
+    ]);
+    const kData=await kRes.json(),dData=await dRes.json();
+    hi('kProg');renderKw(kw,kData,dData);
+  }catch(e){hi('kProg');se('kErr','오류: '+e.message);}
+  finally{en('btnK');}
+}
+
+async function chP(period,unit,el){
+  if(!curKw)return;curPeriod=period;curUnit=unit;
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  await loadChart(period,unit);
+}
+async function chU(unit,el){
+  if(!curKw)return;curUnit=unit;
+  document.querySelectorAll('.utab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  await loadChart(curPeriod,unit);
+}
+async function loadChart(period,unit){
+  const sd=period==='1month'?gd(-1,'m'):period==='3month'?gd(-3,'m'):period==='3year'?gd(-3,'y'):gd(-1,'y');
+  try{
+    const res=await fetch(`/api/datalab?keyword=${enc(curKw)}&timeUnit=${unit}&startDate=${sd}&endDate=${gd(0)}`);
+    const data=await res.json();
+    if(data.results)renderChart(curKw,data);
+  }catch(e){}
+}
+
+function renderKw(kw,kData,dData){
+  const list=(kData.keyword?.keywordList||[]).filter(k=>k.monthlyPcQcCnt!==undefined);
+  const main=list.find(k=>k.relKeyword===kw)||list[0]||{};
+  const pc=parseInt(main.monthlyPcQcCnt)||0,mob=parseInt(main.monthlyMobileQcCnt)||0;
+  const total=pc+mob,ratio=total>0?Math.round((mob/total)*100):0;
+  const bidData=kData.bid;
+  const avgCpc=bidData&&Array.isArray(bidData)&&bidData[0]?(bidData[0].avgMonthlyPcClkCost||0):0;
+  const compIdx=main.compIdx||'mid';
+  document.getElementById('kStats').innerHTML=`
+    <div class="ksc"><div class="ksl">월간 총 검색량</div><div class="ksv g">${total.toLocaleString()}</div><div class="kss">PC + 모바일</div></div>
+    <div class="ksc"><div class="ksl">모바일 비율</div><div class="ksv b">${ratio}%</div><div class="kss">모바일 ${mob.toLocaleString()}건</div></div>
+    <div class="ksc"><div class="ksl">평균 CPC</div><div class="ksv o">${avgCpc>0?avgCpc.toLocaleString()+'원':'-'}</div><div class="kss">PC 기준</div></div>
+    <div class="ksc"><div class="ksl">PC 검색량</div><div class="ksv p">${pc.toLocaleString()}</div><div class="kss">월간 기준</div></div>`;
+  const compVal=compIdx==='high'?85:compIdx==='mid'?50:20;
+  const compColor=compIdx==='high'?'#D84315':compIdx==='mid'?'#F59E0B':'#03C75A';
+  const compText=compIdx==='high'?'높음':compIdx==='mid'?'중간':'낮음';
+  document.getElementById('gaugeBar').style.cssText=`width:${compVal}%;background:${compColor};`;
+  document.getElementById('compBadge').innerHTML=`<span style="display:inline-block;padding:4px 16px;border-radius:20px;background:${compColor}20;color:${compColor};border:1px solid ${compColor}40;font-weight:700;font-size:14px">경쟁강도: ${compText}</span>`;
+  if(dData.results)renderChart(kw,dData);
+  if(bidData&&Array.isArray(bidData)&&bidData.length>0){
+    const maxC=Math.max(...bidData.map(b=>b.avgMonthlyPcClkCost||0));
+    const rows=bidData.slice(0,10).map((b,i)=>{
+      const cpc=b.avgMonthlyPcClkCost||0,pct=maxC>0?Math.round((cpc/maxC)*100):0;
+      return `<tr><td>${i+1}위</td><td><div class="bid-bar"><div class="bid-bar-in" style="width:${pct}%;max-width:100px"></div><span style="font-size:12px;margin-left:4px">${cpc.toLocaleString()}원</span></div></td><td style="font-size:12px;color:var(--t2)">${(b.avgMonthlyPcImpCnt||0).toLocaleString()}</td><td style="font-size:12px;color:var(--t2)">${(b.avgMonthlyPcClkCnt||0).toLocaleString()}</td></tr>`;
+    }).join('');
+    document.getElementById('bidSec').innerHTML=`
+      <div class="sechd"><span class="sect">광고 입찰가 현황 (PC)</span><span class="secs">${kw} 기준</span></div>
+      <table><thead><tr><th>순위</th><th>평균 CPC</th><th>월 노출수</th><th>월 클릭수</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  const sorted=[...list].sort((a,b)=>(parseInt(b.monthlyMobileQcCnt)||0)+(parseInt(b.monthlyPcQcCnt)||0)-((parseInt(a.monthlyMobileQcCnt)||0)+(parseInt(a.monthlyPcQcCnt)||0)));
+  const maxT=sorted[0]?(parseInt(sorted[0].monthlyPcQcCnt)||0)+(parseInt(sorted[0].monthlyMobileQcCnt)||0):1;
+  document.getElementById('kwBody').innerHTML=sorted.slice(0,20).map(k=>{
+    const p=parseInt(k.monthlyPcQcCnt)||0,m=parseInt(k.monthlyMobileQcCnt)||0,t=p+m;
+    const pct=Math.round((t/maxT)*100);
+    const cl=k.compIdx==='high'?'#D84315':k.compIdx==='mid'?'#F59E0B':'#03C75A';
+    const cl2=k.compIdx==='high'?'높음':k.compIdx==='mid'?'중간':'낮음';
+    return `<tr><td style="font-weight:500">${k.relKeyword}</td><td>${p.toLocaleString()}</td><td>${m.toLocaleString()}</td><td style="font-weight:700">${t.toLocaleString()}</td>
+      <td><div class="compbar"><div class="compbar-in" style="width:${pct}%;max-width:80px;background:${cl}"></div><span class="complbl" style="color:${cl}">${cl2}</span></div></td></tr>`;
+  }).join('');
+  document.getElementById('kwSub').textContent=`${kw} 연관 키워드 ${Math.min(sorted.length,20)}개`;
+  sh('kRes');
+}
+
+function renderChart(kw,dData){
+  st('cTitle',`"${kw}" 검색 트렌드`);
+  const pts=dData.results[0].data;
+  if(chartInst)chartInst.destroy();
+  chartInst=new Chart(document.getElementById('tChart').getContext('2d'),{
+    type:'line',
+    data:{labels:pts.map(p=>p.period),datasets:[{label:'트렌드 지수',data:pts.map(p=>p.ratio),borderColor:'#03C75A',backgroundColor:'rgba(3,199,90,0.08)',tension:0.4,fill:true,pointRadius:2,pointHoverRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>`트렌드 지수: ${c.raw}`}}},scales:{y:{beginAtZero:true,max:100}}}
+  });
+}
+
+// ===== 급상승 =====
+function selCat(cid,name,el){
+  curCat=cid;curCatName=name;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+}
+async function startHot(){
+  he('hErr');sh('hProg');hi('hRes');dis('btnH');
+  const days=parseInt(v('hPeriod'));
+  const ed=gd(0),sd=gd(-days,'d');
+  const unit=days<=30?'date':'week';
+  try{
+    const res=await fetch(`/api/shopping?cid=${curCat}&startDate=${sd}&endDate=${ed}&timeUnit=${unit}`);
+    const data=await res.json();
+    hi('hProg');
+    if(data.errorMessage)throw new Error(data.errorMessage);
+    renderHot(data);
+  }catch(e){hi('hProg');se('hErr','오류: '+e.message);}
+  finally{en('btnH');}
+}
+function renderHot(data){
+  st('hTitle',`${curCatName} 쇼핑 트렌드`);
+  const results=data.results||[];
+  if(results.length>0){
+    const pts=results[0].data||[];
+    if(hChartInst)hChartInst.destroy();
+    hChartInst=new Chart(document.getElementById('hChart').getContext('2d'),{
+      type:'line',
+      data:{labels:pts.map(p=>p.period.slice(5)||p.period),datasets:[{label:'쇼핑 트렌드 지수',data:pts.map(p=>p.ratio),borderColor:'#F57C00',backgroundColor:'rgba(245,124,0,0.08)',tension:0.4,fill:true,pointRadius:2,pointHoverRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,max:100}}}
+    });
+    const recent=pts.slice(-10).reverse();
+    document.getElementById('hSec').innerHTML=`
+      <div class="sechd"><span class="sect">${curCatName} 트렌드 데이터</span><span class="secs">최근 데이터</span></div>
+      <table><thead><tr><th>날짜</th><th>트렌드 지수</th><th>변화</th></tr></thead>
+      <tbody>${recent.map((p,i,arr)=>{
+        const prev=arr[i+1];const diff=prev?Math.round((p.ratio-prev.ratio)*10)/10:null;
+        const chg=diff===null?'':diff>0?`<span style="color:#D84315;font-weight:700">▲${diff}</span>`:diff<0?`<span style="color:var(--blue);font-weight:700">▼${Math.abs(diff)}</span>`:'<span style="color:var(--t3)">-</span>';
+        return `<tr><td>${p.period}</td><td style="font-weight:700">${p.ratio}</td><td>${chg}</td></tr>`;
+      }).join('')}</tbody></table>`;
+  }
+  sh('hRes');
+}
+
+// ===== 시뮬레이터 =====
+async function startSim(){
+  const kw=v('sKw'),budget=parseInt(v('sBudget')),dev=v('sDev');
+  if(!kw){se('sErr','키워드를 입력해주세요.');return;}
+  he('sErr');sh('sProg');hi('sRes');dis('btnS');
+  try{
+    const res=await fetch(`/api/simulate?keyword=${enc(kw)}&budget=${budget}&device=${dev}`);
+    const data=await res.json();
+    hi('sProg');
+    if(data.errorMessage)throw new Error(data.errorMessage);
+    renderSim(kw,budget,dev,data);
+  }catch(e){hi('sProg');se('sErr','오류: '+e.message);}
+  finally{en('btnS');}
+}
+function renderSim(kw,budget,dev,data){
+  const items=Array.isArray(data)?data:[];
+  const first=items[0]||{};
+  const avgCpc=first.avgMonthlyPcClkCost||0;
+  const estClicks=avgCpc>0?Math.floor(budget/avgCpc):0;
+  const estImp=estClicks>0?Math.floor(estClicks*10):0;
+  document.getElementById('simGrid').innerHTML=`
+    <div class="sim-card"><div class="sim-icon">💰</div><div class="sim-label">평균 CPC</div><div class="sim-val o">${avgCpc>0?avgCpc.toLocaleString()+'원':'-'}</div><div class="sim-sub">${dev==='pc'?'PC':'모바일'} 기준</div></div>
+    <div class="sim-card"><div class="sim-icon">👆</div><div class="sim-label">예상 일 클릭수</div><div class="sim-val g">${estClicks.toLocaleString()}</div><div class="sim-sub">예산 ${budget.toLocaleString()}원 기준</div></div>
+    <div class="sim-card"><div class="sim-icon">👁️</div><div class="sim-label">예상 노출수</div><div class="sim-val b">${estImp.toLocaleString()}</div><div class="sim-sub">예상 CTR 기준</div></div>`;
+  if(items.length>0){
+    const maxC=Math.max(...items.map(b=>b.avgMonthlyPcClkCost||0));
+    const rows=items.slice(0,10).map((b,i)=>{
+      const cpc=b.avgMonthlyPcClkCost||0,pct=maxC>0?Math.round((cpc/maxC)*100):0;
+      const estD=cpc>0?Math.floor(budget/cpc):0;
+      return `<tr><td style="font-weight:700">${i+1}위</td>
+        <td><div class="bid-bar"><div class="bid-bar-in" style="width:${pct}%;max-width:80px"></div><span style="font-size:12px;margin-left:4px">${cpc.toLocaleString()}원</span></div></td>
+        <td>${(b.avgMonthlyPcImpCnt||0).toLocaleString()}</td>
+        <td>${(b.avgMonthlyPcClkCnt||0).toLocaleString()}</td>
+        <td style="font-weight:700;color:var(--green)">${estD.toLocaleString()}회</td></tr>`;
+    }).join('');
+    document.getElementById('simSec').innerHTML=`
+      <div class="sechd"><span class="sect">순위별 입찰가 & 예상 클릭수</span><span class="secs">일 예산 ${budget.toLocaleString()}원</span></div>
+      <table><thead><tr><th>광고순위</th><th>필요 입찰가</th><th>월 노출수</th><th>월 클릭수</th><th>예상 일 클릭</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  sh('sRes');
+}
+
+// 유틸
+function gd(offset=0,unit='y'){
+  const d=new Date();
+  if(unit==='y')d.setFullYear(d.getFullYear()+offset);
+  else if(unit==='m')d.setMonth(d.getMonth()+offset);
+  else if(unit==='d')d.setDate(d.getDate()+offset);
+  return d.toISOString().slice(0,10);
+}
+function v(id){return document.getElementById(id).value.trim();}
+function enc(s){return encodeURIComponent(s);}
+function sh(id){document.getElementById(id).classList.add('on');}
+function hi(id){document.getElementById(id).classList.remove('on');}
+function st(id,val){document.getElementById(id).textContent=val;}
+function sw2(id,val){document.getElementById(id).style.width=val;}
+function dis(id){document.getElementById(id).disabled=true;}
+function en(id){document.getElementById(id).disabled=false;}
+function se(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.add('on');}
+function he(id){document.getElementById(id).classList.remove('on');}
+function sl(ms){return new Promise(r=>setTimeout(r,ms));}
+
+document.getElementById('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
+document.getElementById('authPw').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
+document.getElementById('kw').addEventListener('keydown',e=>{if(e.key==='Enter')doCheck(startRank);});
+document.getElementById('pn').addEventListener('keydown',e=>{if(e.key==='Enter')doCheck(startRank);});
+document.getElementById('akw').addEventListener('keydown',e=>{if(e.key==='Enter')doCheck(startKw);});
+document.getElementById('sKw').addEventListener('keydown',e=>{if(e.key==='Enter')doCheck(startSim);});
+</script>
+</body>
+</html>
